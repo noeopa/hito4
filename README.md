@@ -19,6 +19,12 @@ La documentación correspondiente al proyecto se encuentra disponible en la Wiki
 
 [Ir a la Wiki](https://gitlab.inf.utfsm.cl/inf236-cc-2026-2/grupo06-2026-proyinf/-/wikis/home)
 
+## Video del prototipo
+
+El video de demostración correspondiente al Hito 3 se encuentra disponible en el siguiente enlace:
+
+[Ver video del prototipo](https://onedrive.live.com/?qt=allmyphotos&photosData=%2Fshare%2F52BFE67361D9DD8B%21s5e7e5d63e5c14c1ba4c769d96a7e1d8f%3Fithint%3Dvideo%26e%3D8Vfkka%26migratedtospo%3Dtrue&cid=52BFE67361D9DD8B&id=52BFE67361D9DD8B%21s5e7e5d63e5c14c1ba4c769d96a7e1d8f&redeem=aHR0cHM6Ly8xZHJ2Lm1zL3YvYy81MmJmZTY3MzYxZDlkZDhiL0lRQmpYWDVld2VVYlRLVEhhZGxxZmgyUEFWNXhNejM0TDNJdjhBeS1fSHJGMW1BP2U9OFZma2th&v=photos)
+
 # Aspectos técnicos
 
 ## Tecnologías utilizadas
