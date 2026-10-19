@@ -181,6 +181,7 @@ Se debe contar con:
 - Git
 - Docker
 - Docker Compose
+- Python 3
 
 > En Linux, si el usuario no está agregado al grupo `docker`, anteponer `sudo` a los comandos de `docker compose` que aparecen a continuación.
 
@@ -194,7 +195,7 @@ cd grupo06-2026-proyinf
 
 ### 3. Configurar variables de entorno
 
-Crear el archivo `.env` dentro de cada API (`API_EJEMPLO`, `API_TRAMITACION`, `API_VALIDACIONES`), con las variables indicadas en la sección **Variables de configuración**.
+Verificar los archivos `.env` incluidos en cada API (`API_EJEMPLO`, `API_TRAMITACION` y `API_VALIDACIONES`) y ajustar sus valores si es necesario según la configuración local.
 
 ### 4. Levantar API_EJEMPLO y MySQL
 
@@ -264,7 +265,6 @@ Ejecutar en cada carpeta donde se levantó un servicio:
 
 ```bash
 docker compose down
-```
 ```
 
 en la carpeta correspondiente a cada servicio levantado.
