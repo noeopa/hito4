@@ -266,6 +266,5 @@ Ejecutar en cada carpeta donde se levantó un servicio:
 ```bash
 docker compose down
 ```
-```
 
 en la carpeta correspondiente a cada servicio levantado.
