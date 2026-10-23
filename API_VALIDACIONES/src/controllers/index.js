@@ -32,6 +32,7 @@ const getSeguimientoTrabajo = (req, res) => {
 };
 
 // Compatibilidad con el endpoint usado en el Hito 3.
+/*
 const getEstadoTrabajo = (req, res) => {
   const trabajoId = req.params.id;
   database.query('SELECT id, nombre, estado, actualizado_en FROM trabajo_de_titulo WHERE id = ?', [trabajoId], (err, result) => {
@@ -40,7 +41,7 @@ const getEstadoTrabajo = (req, res) => {
     res.status(200).json(result[0]);
   });
 };
-
+*/ 
 // HU-02 CA1, CA3 y CA4: listar versiones disponibles.
 const getVersionesTrabajo = (req, res) => {
   const trabajoId = req.params.id;
