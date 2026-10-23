@@ -99,7 +99,6 @@ const registrarAnotacion = (req, res) => {
 
 module.exports = {
   getSeguimientoTrabajo,
-  getEstadoTrabajo,
   getVersionesTrabajo,
   getVersionDetalle,
   registrarAnotacion,
