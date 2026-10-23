@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Aprobar Propuesta</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+  <div class="sidebar">
+    <h2>SGM · Trabajos de Título</h2>
+
+    <a href="seguimiento.html">Seguimiento (Memorista)</a>
+    <a href="anotacion.html">Anotaciones (Guía)</a>
+    <a href="propuestas.html">Propuestas (Jefe de Carrera)</a>
+  </div>
+
+  <div class="content">
+
+    <h1>Propuestas de Trabajo de Título</h1>
+
+    <p class="subtitle">
+      Identifica propuestas pendientes, revisa sus antecedentes y registra su aprobación.
+    </p>
+
+    <div class="card">
+
+      <div class="toolbar">
+
+        <div>
+          <label>Filtrar por estado:</label>
+
+          <select id="estadoFiltro" onchange="cargarPropuestas()">
+            <option value="" selected>Todas</option>
+            <option value="pendiente">Pendientes</option>
+            <option value="aprobada">Aprobadas</option>
+          </select>
+        </div>
+
+        <button onclick="cargarPropuestas()">
+          Actualizar
+        </button>
+
+      </div>
+
+      <div class="table-wrap">
+
+        <table>
+
+          <thead>
+            <tr>
+              <th>Tema</th>
+              <th>Memorista</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+
+          <tbody id="propuestas"></tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+    <div class="card" id="detalle" style="display:none;">
+
+      <span class="eyebrow">Detalle de propuesta</span>
+
+      <h2 id="nombreTema" class="section-title"></h2>
+
+      <p>
+        <strong>Memorista:</strong>
+        <span id="memorista"></span>
+      </p>
+
+      <p>
+        <strong>Estado:</strong>
+        <span class="badge" id="estadoAprobacion"></span>
+      </p>
+
+      <p>
+        <strong>Fecha de registro:</strong>
+        <span id="fechaRegistro"></span>
+      </p>
+
+      <h3>Contenido</h3>
+      <p id="contenido"></p>
+
+      <h3 class="spaced">
+        Anotaciones de revisión del Profesor TT1
+      </h3>
+
+      <div id="anotaciones"></div>
+
+      <div id="accionesAprobacion" class="actions">
+
+        <button class="approve" onclick="confirmarAprobacion()">
+          Aprobar propuesta
+        </button>
+
+      </div>
+
+      <p class="success" id="success"></p>
+
+    </div>
+
+    <p class="error" id="error"></p>
+
+  </div>
+
+  <script>
+
+    let propuestaSeleccionada = null;
+
+    function textoEstado(valor) {
+
+      if (valor === 'aprobada') {
+        return 'Aprobada';
+      }
+
+      return 'Pendiente';
+
+    }
+
+    function claseEstado(valor) {
+
+      return valor === 'aprobada'
+        ? 'status-aprobada'
+        : 'status-pendiente';
+
+    }
+
+    function fecha(valor) {
+
+      if (!valor) {
+        return 'Sin fecha';
+      }
+
+      const fechaObjeto = new Date(valor);
+
+      if (Number.isNaN(fechaObjeto.getTime())) {
+        return 'Sin fecha';
+      }
+
+      return fechaObjeto.toLocaleDateString(
+        'es-CL',
+        { timeZone: 'UTC' }
+      );
+
+    }
+
+    function cargarPropuestas() {
+
+      const estado =
+        document.getElementById('estadoFiltro').value;
+
+      const url = estado
+        ? `http://localhost:8080/api/propuestas?estado=${encodeURIComponent(estado)}`
+        : 'http://localhost:8080/api/propuestas';
+
+      document.getElementById('error').textContent = '';
+
+      fetch(url)
+
+        .then(response => {
+
+          if (!response.ok) {
+            throw new Error(
+              'No se pudieron consultar las propuestas'
+            );
+          }
+
+          return response.json();
+
+        })
+
+        .then(data => {
+
+          const tbody =
+            document.getElementById('propuestas');
+
+          tbody.innerHTML = '';
+
+          if (!data.length) {
+
+            tbody.innerHTML = `
+              <tr>
+                <td colspan="5" class="muted">
+                  No existen propuestas para este estado.
+                </td>
+              </tr>
+            `;
+
+            return;
+
+          }
+
+          data.forEach(p => {
+
+            const row = document.createElement('tr');
+
+            row.innerHTML = `
+              <td>${p.nombre_tema}</td>
+
+              <td>${p.memorista}</td>
+
+              <td>${fecha(p.fecha_registro)}</td>
+
+              <td>
+                <span class="badge ${claseEstado(p.estado_aprobacion)}">
+                  ${textoEstado(p.estado_aprobacion)}
+                </span>
+              </td>
+
+              <td>
+                <button onclick="verPropuesta(${p.id})">
+                  Ver propuesta
+                </button>
+              </td>
+            `;
+
+            tbody.appendChild(row);
+
+          });
+
+        })
+
+        .catch(err => {
+
+          document.getElementById('error').textContent =
+            err.message;
+
+        });
+
+    }
+
+    function verPropuesta(id) {
+
+      document.getElementById('error').textContent = '';
+      document.getElementById('success').textContent = '';
+
+      fetch(`http://localhost:8080/api/propuestas/${id}`)
+
+        .then(async response => {
+
+          const body =
+            await response.json().catch(() => ({}));
+
+          if (!response.ok) {
+
+            throw new Error(
+              body.error || 'No se encontró la propuesta'
+            );
+
+          }
+
+          return body;
+
+        })
+
+        .then(data => {
+
+          propuestaSeleccionada = data;
+
+          document.getElementById('detalle').style.display =
+            'block';
+
+          document.getElementById('nombreTema').textContent =
+            data.nombre_tema;
+
+          document.getElementById('memorista').textContent =
+            data.memorista;
+
+          document.getElementById('estadoAprobacion').textContent =
+            textoEstado(data.estado_aprobacion);
+
+          document.getElementById('estadoAprobacion').className =
+            `badge ${claseEstado(data.estado_aprobacion)}`;
+
+          document.getElementById('fechaRegistro').textContent =
+            fecha(data.fecha_registro);
+
+          document.getElementById('contenido').textContent =
+            data.contenido;
+
+          const anotaciones =
+            document.getElementById('anotaciones');
+
+          anotaciones.innerHTML = '';
+
+          if (!data.anotaciones.length) {
+
+            anotaciones.innerHTML = `
+              <p class="empty-state">
+                No existen anotaciones registradas para esta propuesta.
+              </p>
+            `;
+
+          } else {
+
+            data.anotaciones.forEach(a => {
+
+              const item =
+                document.createElement('div');
+
+              item.className = 'annotation';
+
+              item.innerHTML = `
+                <p>${a.comentario}</p>
+
+                <small>
+                  ${a.autor} · ${fecha(a.fecha)}
+                </small>
+              `;
+
+              anotaciones.appendChild(item);
+
+            });
+
+          }
+
+          const acciones =
+            document.getElementById('accionesAprobacion');
+
+          if (data.estado_aprobacion === 'aprobada') {
+
+            acciones.style.display = 'none';
+
+            document.getElementById('success').textContent =
+              'Esta propuesta se encuentra aprobada y puede continuar hacia la siguiente etapa del proceso.';
+
+          } else {
+
+            acciones.style.display = 'block';
+
+          }
+
+        })
+
+        .catch(err => {
+
+          document.getElementById('error').textContent =
+            err.message;
+
+        });
+
+    }
+
+    function confirmarAprobacion() {
+
+      if (!propuestaSeleccionada) {
+        return;
+      }
+
+      const confirmar = window.confirm(
+        `¿Confirmas la aprobación de la propuesta “${propuestaSeleccionada.nombre_tema}”?`
+      );
+
+      if (!confirmar) {
+        return;
+      }
+
+      fetch(
+        `http://localhost:8080/api/propuestas/${propuestaSeleccionada.id}/aprobar`,
+        {
+          method: 'PUT'
+        }
+      )
+
+        .then(async response => {
+
+          const body =
+            await response.json().catch(() => ({}));
+
+          if (!response.ok) {
+
+            throw new Error(
+              body.error || 'No fue posible aprobar la propuesta'
+            );
+
+          }
+
+          return body;
+
+        })
+
+        .then(data => {
+
+          document.getElementById('success').textContent =
+            data.ya_estaba_aprobada
+              ? 'La propuesta ya se encontraba aprobada.'
+              : 'Propuesta aprobada correctamente. Puede continuar hacia la siguiente etapa del proceso.';
+
+          cargarPropuestas();
+
+          verPropuesta(data.id);
+
+        })
+
+        .catch(err => {
+
+          document.getElementById('error').textContent =
+            err.message;
+
+        });
+
+    }
+
+    cargarPropuestas();
+
+  </script>
+
+</body>
+</html>

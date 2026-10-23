@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Revisión de versiones</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="sidebar">
+    <h2>SGM · Trabajos de Título</h2>
+    <a href="seguimiento.html">Seguimiento (Memorista)</a>
+    <a href="anotacion.html">Anotaciones (Guía)</a>
+    <a href="propuestas.html">Propuestas (Jefe de Carrera)</a>
+  </div>
+
+  <div class="content">
+    <h1>Versiones del Trabajo de Título</h1>
+    <p class="subtitle">
+      Revisa una versión y registra retroalimentación asociada específicamente a ella.
+    </p>
+
+    <div class="card">
+      <label>ID del Trabajo de Título:</label>
+
+      <input
+        type="number"
+        id="trabajoId"
+        min="1"
+        placeholder="Ingrese el ID del Trabajo de Título"
+      >
+
+      <button onclick="cargarVersiones()">
+        Consultar versiones
+      </button>
+    </div>
+
+    <div class="card" id="versionesCard" style="display:none;">
+      <h2 class="section-title">Versiones registradas</h2>
+      <div id="versiones" class="version-grid"></div>
+    </div>
+
+    <div id="detalle" style="display:none;">
+
+      <div class="card">
+        <span class="eyebrow">Versión seleccionada</span>
+
+        <h2 id="versionTitulo" class="section-title"></h2>
+
+        <p class="muted">
+          Fecha de entrega:
+          <span id="versionFecha"></span>
+        </p>
+
+        <h3>Contenido de la versión</h3>
+        <p id="versionContenido"></p>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title">Anotaciones de esta versión</h2>
+        <div id="anotaciones"></div>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title">Registrar nueva anotación</h2>
+
+        <input type="hidden" id="versionId">
+
+        <label>ID del Guía (autor):</label>
+        <input type="number" id="guiaId" value="1" min="1">
+
+        <label>Comentario:</label>
+        <textarea
+          id="comentario"
+          rows="4"
+          placeholder="Escribe la retroalimentación para esta versión"
+        ></textarea>
+
+        <button onclick="registrarAnotacion()">
+          Guardar anotación
+        </button>
+
+        <p class="success" id="success"></p>
+      </div>
+
+    </div>
+
+    <p class="error" id="error"></p>
+  </div>
+
+  <script>
+
+    function fecha(valor) {
+      return new Date(valor).toLocaleDateString('es-CL');
+    }
+
+    function cargarVersiones() {
+
+      const trabajoId = document.getElementById('trabajoId').value;
+
+      const error = document.getElementById('error');
+      const success = document.getElementById('success');
+
+      error.textContent = '';
+      success.textContent = '';
+
+      if (!trabajoId) {
+        error.textContent = 'Ingresa el ID de un Trabajo de Título.';
+        return;
+      }
+
+      document.getElementById('versionesCard').style.display = 'none';
+      document.getElementById('detalle').style.display = 'none';
+
+      fetch(`http://localhost:8081/api/trabajos/${trabajoId}/versiones`)
+        .then(async response => {
+
+          if (!response.ok) {
+            throw new Error('No se pudieron consultar las versiones');
+          }
+
+          return response.json();
+
+        })
+        .then(versiones => {
+
+          const contenedor = document.getElementById('versiones');
+
+          contenedor.innerHTML = '';
+
+          document.getElementById('versionesCard').style.display = 'block';
+
+          if (!versiones.length) {
+
+            contenedor.innerHTML = `
+              <p class="muted">
+                No existen versiones registradas para este Trabajo de Título.
+              </p>
+            `;
+
+            return;
+          }
+
+          versiones.forEach(version => {
+
+            const card = document.createElement('button');
+
+            card.className = 'version-button';
+
+            card.innerHTML = `
+              <strong>Versión ${version.numero_version}</strong>
+              <span>${fecha(version.fecha_entrega)}</span>
+            `;
+
+            card.onclick = () => cargarDetalle(version.id);
+
+            contenedor.appendChild(card);
+
+          });
+
+        })
+        .catch(err => {
+
+          error.textContent = err.message;
+
+        });
+
+    }
+
+    function cargarDetalle(versionId) {
+
+      document.getElementById('error').textContent = '';
+      document.getElementById('success').textContent = '';
+
+      fetch(`http://localhost:8081/api/versiones/${versionId}`)
+        .then(async response => {
+
+          if (!response.ok) {
+
+            const body = await response
+              .json()
+              .catch(() => ({}));
+
+            throw new Error(
+              body.error || 'No se pudo consultar la versión'
+            );
+
+          }
+
+          return response.json();
+
+        })
+        .then(data => {
+
+          document.getElementById('detalle').style.display = 'block';
+
+          document.getElementById('versionId').value = data.id;
+
+          document.getElementById('versionTitulo').textContent =
+            `Versión ${data.numero_version}`;
+
+          document.getElementById('versionFecha').textContent =
+            fecha(data.fecha_entrega);
+
+          document.getElementById('versionContenido').textContent =
+            data.contenido;
+
+          const anotaciones =
+            document.getElementById('anotaciones');
+
+          anotaciones.innerHTML = '';
+
+          if (!data.anotaciones.length) {
+
+            anotaciones.innerHTML = `
+              <p class="empty-state">
+                Esta versión aún no tiene anotaciones registradas.
+              </p>
+            `;
+
+          } else {
+
+            data.anotaciones.forEach(a => {
+
+              const item = document.createElement('div');
+
+              item.className = 'annotation';
+
+              item.innerHTML = `
+                <p>${a.comentario}</p>
+
+                <small>
+                  ${a.autor}
+                  · ${new Date(a.fecha).toLocaleString('es-CL')}
+                  · Versión ${data.numero_version}
+                </small>
+              `;
+
+              anotaciones.appendChild(item);
+
+            });
+
+          }
+
+        })
+        .catch(err => {
+
+          document.getElementById('error').textContent =
+            err.message;
+
+        });
+
+    }
+
+    function registrarAnotacion() {
+
+      const versionId =
+        document.getElementById('versionId').value;
+
+      const guia_id =
+        document.getElementById('guiaId').value;
+
+      const comentario =
+        document.getElementById('comentario').value.trim();
+
+      document.getElementById('error').textContent = '';
+      document.getElementById('success').textContent = '';
+
+      if (!versionId) {
+
+        document.getElementById('error').textContent =
+          'Selecciona primero una versión.';
+
+        return;
+
+      }
+
+      if (!comentario) {
+
+        document.getElementById('error').textContent =
+          'Ingresa una anotación antes de guardar.';
+
+        return;
+
+      }
+
+      fetch(
+        `http://localhost:8081/api/versiones/${versionId}/anotaciones`,
+        {
+          method: 'POST',
+
+          headers: {
+            'Content-Type': 'application/json'
+          },
+
+          body: JSON.stringify({
+            comentario,
+            guia_id
+          })
+        }
+      )
+        .then(async response => {
+
+          const body = await response
+            .json()
+            .catch(() => ({}));
+
+          if (!response.ok) {
+
+            throw new Error(
+              body.error || 'No se pudo registrar la anotación'
+            );
+
+          }
+
+          return body;
+
+        })
+        .then(() => {
+
+          document.getElementById('comentario').value = '';
+
+          document.getElementById('success').textContent =
+            'Anotación registrada con éxito y asociada a la versión seleccionada.';
+
+          cargarDetalle(versionId);
+
+        })
+        .catch(err => {
+
+          document.getElementById('error').textContent =
+            err.message;
+
+        });
+
+    }
+
+  </script>
+</body>
+</html>

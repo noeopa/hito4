@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Seguimiento del Trabajo de Título</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="sidebar">
+    <h2>SGM · Trabajos de Título</h2>
+    <a href="seguimiento.html">Seguimiento (Memorista)</a>
+    <a href="anotacion.html">Anotaciones (Guía)</a>
+    <a href="propuestas.html">Propuestas (Jefe de Carrera)</a>
+  </div>
+
+  <div class="content">
+    <h1>Seguimiento del Trabajo de Título</h1>
+    <p class="subtitle">Consulta el estado actual, los hitos y las acciones pendientes de tu Trabajo de Título.</p>
+
+    <div class="card">
+      <label>ID del Trabajo de Título:</label>
+      <input type="number" id="trabajoId" min="1" placeholder="Ej: 1">
+      <button onclick="consultarSeguimiento()">Consultar seguimiento</button>
+    </div>
+
+    <div id="resultado" style="display:none;">
+      <div class="card">
+        <span class="eyebrow">Estado actual</span>
+        <h3 id="nombre"></h3>
+        <p>Estado: <span class="badge" id="estado"></span></p>
+        <p class="muted">Información actualizada: <span id="actualizado"></span></p>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title">Hitos del Trabajo de Título</h2>
+        <div id="hitos" class="timeline"></div>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title">Acciones pendientes</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Acción</th><th>Responsable</th><th>Estado</th></tr>
+            </thead>
+            <tbody id="acciones"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <p class="error" id="error"></p>
+  </div>
+
+  <script>
+    function textoEstado(valor) {
+      return String(valor || '').replaceAll('_', ' ');
+    }
+
+    function formatearFecha(valor) {
+      if (!valor) return 'Consulta actual';
+      return new Date(valor).toLocaleString('es-CL');
+    }
+
+    function consultarSeguimiento() {
+      const id = document.getElementById('trabajoId').value;
+      document.getElementById('error').textContent = '';
+
+      fetch(`http://localhost:8081/api/trabajos/${id}/seguimiento`)
+        .then(async response => {
+          if (!response.ok) {
+            const body = await response.json().catch(() => ({}));
+            throw new Error(body.error || 'No se encontró el Trabajo de Título');
+          }
+          return response.json();
+        })
+        .then(data => {
+          document.getElementById('resultado').style.display = 'block';
+          document.getElementById('nombre').textContent = data.nombre;
+          document.getElementById('estado').textContent = textoEstado(data.estado);
+          document.getElementById('actualizado').textContent = formatearFecha(data.actualizado_en);
+
+          const hitos = document.getElementById('hitos');
+          hitos.innerHTML = '';
+          if (!data.hitos.length) {
+            hitos.innerHTML = '<p class="muted">Aún no hay hitos registrados.</p>';
+          } else {
+            data.hitos.forEach(hito => {
+              const item = document.createElement('div');
+              item.className = 'timeline-item';
+              item.innerHTML = `<div><strong>${hito.nombre}</strong></div><span class="badge status-${hito.estado}">${textoEstado(hito.estado)}</span>`;
+              hitos.appendChild(item);
+            });
+          }
+
+          const acciones = document.getElementById('acciones');
+          acciones.innerHTML = '';
+          if (!data.acciones_pendientes.length) {
+            acciones.innerHTML = '<tr><td colspan="3" class="muted">No existen acciones pendientes.</td></tr>';
+          } else {
+            data.acciones_pendientes.forEach(accion => {
+              const row = document.createElement('tr');
+              row.innerHTML = `<td>${accion.descripcion}</td><td>${accion.responsable}</td><td><span class="badge status-${accion.estado}">${textoEstado(accion.estado)}</span></td>`;
+              acciones.appendChild(row);
+            });
+          }
+        })
+        .catch(err => {
+          document.getElementById('resultado').style.display = 'none';
+          document.getElementById('error').textContent = err.message;
+        });
+    }
+
+  </script>
+</body>
+</html>
