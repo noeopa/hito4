@@ -48,7 +48,7 @@ const aprobarPropuesta = (req, res) => {
   });
 };
 
-// HU-03 CA2: registrar anotación de revisión sobre una versión de propuesta.
+// HU-03 CA2: registrar anotación de revisión sobre una versión de propuesta. S-09 
 const registrarAnotacionPropuesta = (req, res) => {
   const versionId = req.params.id;
   const { comentario } = req.body;
@@ -72,7 +72,7 @@ const registrarAnotacionPropuesta = (req, res) => {
   });
 };
 
-// HU-03 CA1: listar versiones de una propuesta para su revisión.
+// HU-03 CA1: listar versiones de una propuesta para su revisión. S-1O
 const getVersionesPropuesta = (req, res) =>{
   const propuestaId = req.params.id;
   database.query(
@@ -85,6 +85,24 @@ const getVersionesPropuesta = (req, res) =>{
   );
 };
 
+// HU-03 CA1 y CA3: contenido + anotaciones de una versión de propuesta.
+const getVersionPropuestaDetalle = (req, res) => {
+  const versionId = req.params.id;
+  database.query('SELECT id, propuesta_id, numero_version, fecha_entrega, contenido FROM version_propuesta WHERE id = ?', [versionId], (err, versions) => {
+    if (err) return res.status(500).json({ error: 'Error al consultar la versión de la propuesta' });
+    if (!versions[0]) return res.status(404).json({ error: 'Versión de propuesta no encontrada' });
+
+    database.query(
+      'SELECT id, comentario, autor, fecha FROM anotacion_propuesta WHERE version_propuesta_id = ? ORDER BY fecha, id',
+      [versionId],
+      (err2, annotations) => {
+        if (err2) return res.status(500).json({ error: 'Error al consultar las anotaciones de la versión' });
+        res.status(200).json({ ...versions[0], anotaciones: annotations });
+      }
+    );
+  });
+};
+
 /*esta parte del module.exports siempre dejenla al final*/
 
 module.exports = {
@@ -93,6 +111,7 @@ module.exports = {
   aprobarPropuesta,
   registrarAnotacionPropuesta,
   getVersionesPropuesta,
+  getVersionPropuestaDetalle,
 };
 
 
