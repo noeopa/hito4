@@ -32,7 +32,7 @@ const getPropuestaDetalle = (req, res) => {
   });
 };
 
-// HU-04 CA2 y CA4: aprobar y devolver estado actualizado.
+// HU-04 CA2 y CA4: aprobar y devolver estado actualizado
 const aprobarPropuesta = (req, res) => {
   const propuestaId = req.params.id;
   const updateQuery = "UPDATE propuesta_tt SET estado_aprobacion = 'aprobada' WHERE id = ? AND estado_aprobacion <> 'aprobada'";
@@ -52,4 +52,27 @@ module.exports = {
   getPropuestas,
   getPropuestaDetalle,
   aprobarPropuesta,
+};
+
+
+// HU-03 CA2: registrar anotación de revisión sobre una propuesta
+const registrarAnotacionPropuesta = (req, res) =>{
+  const propuestaId = req.params.id;
+  const { comentario } = req.body;
+  if (!comentario || !comentario.trim()) {
+    return res.status(400).json({ error: 'El comentario es obligatorio' });
+  }
+  database.query('SELECT id FROM propuesta_tt WHERE id = ?', [propuestaId], (err, propuestas) => {
+    if (err) return res.status(500).json({ error: 'Error al validar la propuesta' });
+    if (!propuestas[0]) return res.status(404).json({ error: 'Propuesta no encontrada' });
+
+    const query = "INSERT INTO anotacion_propuesta (propuesta_id, comentario, autor, fecha) VALUES (?, ?, 'Profesor TT1', CURDATE())";
+    database.query(query, [propuestaId, comentario.trim()], (err2, result) => {
+      if (err2) return res.status(500).json({ error: 'Error al registrar la anotación' });
+      database.query('SELECT * FROM anotacion_propuesta WHERE id = ?', [result.insertId], (err3, rows) => {
+        if (err3) return res.status(500).json({ error: 'Error al recuperar la anotación registrada' });
+        res.status(201).json(rows[0]);
+      });
+    });
+  });
 };
