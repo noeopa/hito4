@@ -72,8 +72,18 @@ const registrarAnotacionPropuesta = (req, res) => {
   });
 };
 
-
-
+// HU-03 CA1: listar versiones de una propuesta para su revisión.
+const getVersionesPropuesta = (req, res) =>{
+  const propuestaId = req.params.id;
+  database.query(
+    'SELECT id, numero_version, fecha_entrega, contenido FROM version_propuesta WHERE propuesta_id = ? ORDER BY fecha_entrega',
+    [propuestaId],
+    (err, rows) => {
+      if (err) return res.status(500).json({ error: 'Error al consultar las versiones de la propuesta' });
+      res.status(200).json(rows);
+    }
+  );
+};
 
 /*esta parte del module.exports siempre dejenla al final*/
 
@@ -82,6 +92,7 @@ module.exports = {
   getPropuestaDetalle,
   aprobarPropuesta,
   registrarAnotacionPropuesta,
+  getVersionesPropuesta,
 };
 
 
