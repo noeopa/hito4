@@ -15,6 +15,7 @@ const getPropuestas = (req, res) => {
 };
 
 // HU-04 CA1 y CA4: consultar contenido, estado y anotaciones previas.
+// Esta es la version actualizada para la tabla version_propuesta
 const getPropuestaDetalle = (req, res) => {
   const propuestaId = req.params.id;
   database.query('SELECT * FROM propuesta_tt WHERE id = ?', [propuestaId], (err, rows) => {
@@ -22,7 +23,11 @@ const getPropuestaDetalle = (req, res) => {
     if (!rows[0]) return res.status(404).json({ error: 'Propuesta no encontrada' });
 
     database.query(
-      'SELECT id, comentario, autor, fecha FROM anotacion_propuesta WHERE propuesta_id = ? ORDER BY fecha, id',
+      `SELECT ap.id, ap.comentario, ap.autor, ap.fecha, vp.numero_version
+       FROM anotacion_propuesta ap
+       JOIN version_propuesta vp ON vp.id = ap.version_propuesta_id
+       WHERE vp.propuesta_id = ?
+       ORDER BY ap.fecha, ap.id`,
       [propuestaId],
       (err2, annotations) => {
         if (err2) return res.status(500).json({ error: 'Error al consultar las anotaciones de la propuesta' });
