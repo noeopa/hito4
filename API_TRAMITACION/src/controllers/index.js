@@ -48,26 +48,21 @@ const aprobarPropuesta = (req, res) => {
   });
 };
 
-module.exports = {
-  getPropuestas,
-  getPropuestaDetalle,
-  aprobarPropuesta,
-};
-
-
-// HU-03 CA2: registrar anotación de revisión sobre una propuesta
-const registrarAnotacionPropuesta = (req, res) =>{
-  const propuestaId = req.params.id;
+// HU-03 CA2: registrar anotación de revisión sobre una versión de propuesta.
+const registrarAnotacionPropuesta = (req, res) => {
+  const versionId = req.params.id;
   const { comentario } = req.body;
+
   if (!comentario || !comentario.trim()) {
     return res.status(400).json({ error: 'El comentario es obligatorio' });
   }
-  database.query('SELECT id FROM propuesta_tt WHERE id = ?', [propuestaId], (err, propuestas) => {
-    if (err) return res.status(500).json({ error: 'Error al validar la propuesta' });
-    if (!propuestas[0]) return res.status(404).json({ error: 'Propuesta no encontrada' });
 
-    const query = "INSERT INTO anotacion_propuesta (propuesta_id, comentario, autor, fecha) VALUES (?, ?, 'Profesor TT1', CURDATE())";
-    database.query(query, [propuestaId, comentario.trim()], (err2, result) => {
+  database.query('SELECT id FROM version_propuesta WHERE id = ?', [versionId], (err, versions) => {
+    if (err) return res.status(500).json({ error: 'Error al validar la versión de la propuesta' });
+    if (!versions[0]) return res.status(404).json({ error: 'Versión de propuesta no encontrada' });
+
+    const query = "INSERT INTO anotacion_propuesta (version_propuesta_id, comentario, autor, fecha) VALUES (?, ?, 'Profesor TT1', CURDATE())";
+    database.query(query, [versionId, comentario.trim()], (err2, result) => {
       if (err2) return res.status(500).json({ error: 'Error al registrar la anotación' });
       database.query('SELECT * FROM anotacion_propuesta WHERE id = ?', [result.insertId], (err3, rows) => {
         if (err3) return res.status(500).json({ error: 'Error al recuperar la anotación registrada' });
@@ -76,3 +71,17 @@ const registrarAnotacionPropuesta = (req, res) =>{
     });
   });
 };
+
+
+
+
+/*esta parte del module.exports siempre dejenla al final*/
+
+module.exports = {
+  getPropuestas,
+  getPropuestaDetalle,
+  aprobarPropuesta,
+  registrarAnotacionPropuesta,
+};
+
+
