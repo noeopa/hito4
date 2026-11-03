@@ -121,14 +121,26 @@ CREATE TABLE IF NOT EXISTS propuesta_tt (
     fecha_registro DATE NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS anotacion_propuesta (
+
+CREATE TABLE IF NOT EXISTS version_propuesta (
     id INT AUTO_INCREMENT PRIMARY KEY,
     propuesta_id INT NOT NULL,
+    numero_version VARCHAR(20) NOT NULL,
+    fecha_entrega DATE NOT NULL,
+    contenido TEXT NOT NULL,
+    FOREIGN KEY (propuesta_id) REFERENCES propuesta_tt(id)
+);
+
+/* Nueva anotacion propuesta vinculada a version propuesta*/
+CREATE TABLE IF NOT EXISTS anotacion_propuesta (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    version_propuesta_id INT NOT NULL,
     comentario TEXT NOT NULL,
     autor VARCHAR(100) NOT NULL,
     fecha DATE NOT NULL,
-    FOREIGN KEY (propuesta_id) REFERENCES propuesta_tt(id)
+    FOREIGN KEY (version_propuesta_id) REFERENCES version_propuesta(id)
 );
+
 
 INSERT INTO propuesta_tt (id, nombre_tema, memorista, contenido, estado_aprobacion, fecha_registro)
 SELECT 1, 'Optimización de rutas en redes de transporte público', 'Diego Salinas', 'Propuesta orientada a optimizar rutas de transporte público mediante análisis de datos y criterios de eficiencia.', 'pendiente', '2026-05-21'
@@ -140,9 +152,13 @@ INSERT INTO propuesta_tt (id, nombre_tema, memorista, contenido, estado_aprobaci
 SELECT 3, 'Visualización de indicadores para gestión universitaria', 'Martín Pérez', 'Propuesta de tablero para visualizar indicadores relevantes de gestión universitaria.', 'aprobada', '2026-05-18'
 WHERE NOT EXISTS (SELECT 1 FROM propuesta_tt WHERE id = 3);
 
-INSERT INTO anotacion_propuesta (propuesta_id, comentario, autor, fecha)
+INSERT INTO version_propuesta (id, propuesta_id, numero_version, fecha_entrega, contenido)
+SELECT 1, 1, '1.0', '2026-05-21', 'Primera versión de la propuesta: optimización de rutas en redes de transporte público, con problema, objetivos y justificación inicial.'
+WHERE NOT EXISTS (SELECT 1 FROM version_propuesta WHERE id = 1);
+
+INSERT INTO anotacion_propuesta (version_propuesta_id, comentario, autor, fecha)
 SELECT 1, 'Precisar mejor la definición del problema y revisar que los objetivos específicos estén alineados con la solución propuesta.', 'Profesor TT1', '2026-05-21'
-WHERE NOT EXISTS (SELECT 1 FROM anotacion_propuesta WHERE propuesta_id = 1 AND comentario LIKE 'Precisar mejor%');
-INSERT INTO anotacion_propuesta (propuesta_id, comentario, autor, fecha)
+WHERE NOT EXISTS (SELECT 1 FROM anotacion_propuesta WHERE version_propuesta_id = 1 AND comentario LIKE 'Precisar mejor%');
+INSERT INTO anotacion_propuesta (version_propuesta_id, comentario, autor, fecha)
 SELECT 1, 'Incluir antecedentes que permitan justificar la relevancia del problema abordado.', 'Profesor TT1', '2026-05-21'
-WHERE NOT EXISTS (SELECT 1 FROM anotacion_propuesta WHERE propuesta_id = 1 AND comentario LIKE 'Incluir antecedentes%');
+WHERE NOT EXISTS (SELECT 1 FROM anotacion_propuesta WHERE version_propuesta_id = 1 AND comentario LIKE 'Incluir antecedentes%');
